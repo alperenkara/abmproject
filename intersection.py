@@ -1,16 +1,25 @@
+from typing import List, Tuple
+
 TIME_STEP = 1
 TILE_SIZE = 5  # m
 
 
 class Intersection:
+    LaneIdType = int
+    Time = int
+    VehicleType = int
+    TilePos = Tuple[int, int]
+    Tile = List[Tuple[Time, VehicleType]]
 
-    def __init__(self, width, height):
+    def __init__(self, width: int, height: int):
         self.grid = [[[] for _ in range(0, height)] for _ in range(0, width)]
         self.width = width
         self.height = height
         self.current_time = 0
 
-    def get_reservation(self, vehicle, lane_id, requested_direction, speed, distance):
+    def get_reservation(self, vehicle: VehicleType, lane_id: LaneIdType,
+                        requested_direction,
+                        speed: float, distance: float) -> bool:
         required_tiles = self._get_lane_tiles(lane_id, speed / TILE_SIZE)
         start_at = self.current_time + int(distance / speed)
         is_clear = not self._will_collide(required_tiles, start_at)
@@ -18,7 +27,8 @@ class Intersection:
             self._mark_reserved(required_tiles, vehicle, start_at)
         return is_clear
 
-    def _get_lane_tiles(self, lane_id, tile_speed):
+    def _get_lane_tiles(self, lane_id: LaneIdType,
+                        tile_speed: float) -> List[Tuple[TilePos, Time]]:
         result = []
         if lane_id == 1:
             result = [((x, y), time)
@@ -47,16 +57,17 @@ class Intersection:
 
         return result
 
-    def _will_collide(self, required_tiles, start_at):
+    def _will_collide(self, required_tiles: List[Tuple[TilePos, Time]],
+                      start_at: Time) -> bool:
         return any(time == req_time + start_at
                    for (tile, req_time) in required_tiles
                    for (time, _) in self._get_tile(tile))
 
-    def _get_tile(self, tile):
+    def _get_tile(self, tile: TilePos) -> Tile:
         x, y = tile
         return self.grid[x][y]
 
-    def _mark_reserved(self, required_tiles, vehicle, start_at):
+    def _mark_reserved(self, required_tiles: List[Tuple[TilePos, Time]],
+                       vehicle: VehicleType, start_at: Time):
         for (tile, time) in required_tiles:
             self._get_tile(tile).append((time + start_at, vehicle))
-
