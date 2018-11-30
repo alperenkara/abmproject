@@ -98,7 +98,7 @@ def runCollisionCheck(allVehicles):
 
 
 def main():
-    RUNTIME = 100
+    RUNTIME = 300
     TIMEINCREMENT = 1
     percentiles = []
 
@@ -106,12 +106,12 @@ def main():
     # initialize a single vehicle with idno 0
     allVehicles = []
     allVehicles.append(Vehicle(0, 75))
-    # a = Auctioneer()
+
 
     print("Running Simulation...")
     # main simulation loop
     t = 0
-    #printIntersectionData(t, allVehicles)
+   
     while t < RUNTIME:
         t += TIMEINCREMENT
         for vehicle in allVehicles:
@@ -123,6 +123,7 @@ def main():
         runCollisionCheck(allVehicles)
 
     tf = time.time()
+    printIntersectionData(t, allVehicles)
     print("Simulation complete. Run time: " + str(tf - t0) + " sec")
 
     allTimes = []
