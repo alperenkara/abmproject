@@ -1,7 +1,10 @@
+from app import Application
 from intersection import Intersection
 
 
 def main():
+    app = Application()
+    app.run()
     inter = Intersection(2, 2)
     print("Vehicle 1, lane 1, speed 2, distance 0:",
           inter.get_reservation(1, 1, None, 2, 0))
