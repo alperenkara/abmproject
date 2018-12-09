@@ -1,61 +1,85 @@
-from typing import List, Tuple
+from math import floor, ceil
+from typing import List, Tuple, Dict
 
-TIME_STEP = 1
-TILE_SIZE = 5  # m
+from vehicle import Vehicle
+
+TIME_STEP = 0.1
+TILES_PER_M = 5
+
+DirectionType = str
+PosType = Tuple[float, float]
+
+
+class Lane:
+    ExitType = Dict[DirectionType, List[Tuple[PosType, PosType]]]
+
+    def __init__(self, entry: PosType, exits: ExitType):
+        self.entry = entry
+        self.exits = exits
+
+    def get_curves(self, direction: DirectionType):
+        return [lambda t: self._get_func((self.entry,) + exit_points, t) for exit_points in self.exits[direction]]
+
+    def _get_func(self, points: Tuple[PosType, PosType, PosType], t: float):
+        p = points
+        return (
+            (1 - t) * ((1 - t) * p[0][0] + t * p[1][0]) + t * ((1 - t) * p[1][0] + t * p[2][0]),
+            (1 - t) * ((1 - t) * p[0][1] + t * p[1][1]) + t * ((1 - t) * p[1][1] + t * p[2][1]),
+        )
 
 
 class Intersection:
     LaneIdType = int
     Time = int
-    VehicleType = int
+    VehicleType = Vehicle
     TilePos = Tuple[int, int]
     Tile = List[Tuple[Time, VehicleType]]
 
-    def __init__(self, width: int, height: int):
+    def __init__(self, width: int, height: int, lanes: Dict[int, Lane]):
         self.grid = [[[] for _ in range(0, height)] for _ in range(0, width)]
         self.width = width
         self.height = height
         self.current_time = 0
+        self.lanes = lanes
 
     def get_reservation(self, vehicle: VehicleType, lane_id: LaneIdType,
-                        requested_direction,
+                        requested_direction: DirectionType,
                         speed: float, distance: float) -> bool:
-        required_tiles = self._get_lane_tiles(lane_id, speed / TILE_SIZE)
-        start_at = self.current_time + int(distance / speed)
+        required_tiles = self._get_lane_tiles(lane_id, requested_direction, speed, vehicle)
+        start_at = self.current_time + int(distance / speed / TIME_STEP)
         is_clear = not self._will_collide(required_tiles, start_at)
         if is_clear:
             self._mark_reserved(required_tiles, vehicle, start_at)
         return is_clear
 
-    def _get_lane_tiles(self, lane_id: LaneIdType,
-                        tile_speed: float) -> List[Tuple[TilePos, Time]]:
-        result = []
-        if lane_id == 1:
-            result = [((x, y), time)
-                      for x in range(self.width // 2, self.width)
-                      for y in range(0, self.height)
-                      for time in range(int(y / tile_speed),
-                                        int((y + 1) / tile_speed))]
-        elif lane_id == 3:
-            result = [((x, y), time)
-                      for x in range(0, int(self.width / 2))
-                      for y in range(0, self.height)
-                      for time in range(int((self.height - y - 1) / tile_speed),
-                                        int((self.height - y) / tile_speed))]
-        elif lane_id == 2:
-            result = [((x, y), time)
-                      for x in range(0, self.width)
-                      for y in range(0, int(self.height / 2))
-                      for time in range(int(x / tile_speed),
-                                        int((x + 1) / tile_speed))]
-        elif lane_id == 4:
-            result = [((x, y), time)
-                      for x in range(0, self.width)
-                      for y in range(0, int(self.height / 2))
-                      for time in range(int((self.width - x - 1) / tile_speed),
-                                        int((self.width - x) / tile_speed))]
+    def _get_vehicle_tiles(self, pos: PosType, vehicle: VehicleType) -> List[TilePos]:  # TODO: buffers
+        vehicle_corners = (
+            (pos[0] - vehicle.width / 2, pos[1] - vehicle.height / 2),
+            (pos[0] + vehicle.width / 2, pos[1] + vehicle.height / 2),
+        )
 
-        return result
+        return [(x, y)
+                for x in range(int(floor(vehicle_corners[0][0])), int(ceil(vehicle_corners[1][0])) + 1)
+                for y in range(int(floor(vehicle_corners[0][1])), int(ceil(vehicle_corners[1][1])) + 1)]
+
+    # TODO: multiple outgoing lines
+    def _get_lane_tiles(self, lane_id: LaneIdType, requested_direction: DirectionType,
+                        speed: float, vehicle: VehicleType) -> List[Tuple[TilePos, Time]]:
+
+        lane = self.lanes[lane_id]
+        if lane is None:
+            return []
+
+        if requested_direction not in lane.exits:
+            return []
+
+        t_range = [i * 0.01 for i in range(101)]
+        time_to_pass_intersection = 5 / speed  # TODO(15.12): use curve length instead of 5
+
+        return [(tile, int((t * time_to_pass_intersection) / TIME_STEP))
+                for curve in lane.get_curves(requested_direction)
+                for t in t_range
+                for tile in self._get_vehicle_tiles(curve(t), vehicle)]
 
     def _will_collide(self, required_tiles: List[Tuple[TilePos, Time]],
                       start_at: Time) -> bool:

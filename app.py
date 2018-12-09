@@ -2,14 +2,58 @@ import random
 from tkinter import *
 
 from config import PIXES_PER_M
-from intersection import Intersection
+from intersection import Intersection, Lane
 from vehicle import Vehicle
+
+# TODO: Vehicles do not collides with each other
+# TODO(15.12): Vehicles ask for clearance at intersection
+# TODO(15.12): Vehicles slows down if don't have clearance
+# TODO(15.12): Vehicles follow lanes at intersection
 
 CANVAS_SIZE = 700
 CANVAS_SIZE_M = CANVAS_SIZE // PIXES_PER_M
 
 INTERSECTION_OFFSET = 280
 INTERSECTION_OFFSET_M = INTERSECTION_OFFSET // PIXES_PER_M
+
+
+def mid_pos(lane_width: float, i: int):
+    return lane_width * (i - 1) + lane_width / 2
+
+
+class CzarnowiejskaIntersection(Intersection):
+
+    def __init__(self):
+        width = 10
+        height = 10
+        lane_width = height / 3
+        lanes = {
+            1: Lane((mid_pos(lane_width, 3), height), {
+                'E': [(mid_pos(lane_width, 3), mid_pos(lane_width, 3)),
+                      (width, mid_pos(lane_width, 3))]
+            }),
+            2: Lane((mid_pos(lane_width, 2), height), {
+                'N': [(mid_pos(lane_width, 2), height/2),
+                      (mid_pos(lane_width, 1), 0)]
+            }),
+            4: Lane((mid_pos(lane_width, 1), 0), {
+                'S': [(mid_pos(lane_width, 1), height / 2),
+                      (mid_pos(lane_width, 1), height)]
+            }),
+            5: Lane((mid_pos(lane_width, 2), 0), {
+                'E': [(mid_pos(lane_width, 2), mid_pos(lane_width, 2)),
+                      (width, mid_pos(lane_width, 2))]
+            }),
+            6: Lane((width, mid_pos(lane_width, 1)), {
+                'N': [(mid_pos(lane_width, 3), mid_pos(lane_width, 1)),
+                      (mid_pos(lane_width, 3), 0)]
+            }),
+            7: Lane((width, mid_pos(lane_width, 2)), {
+                'S': [(mid_pos(lane_width, 1), mid_pos(lane_width, 2)),
+                      (mid_pos(lane_width, 1), height)]
+            }),
+        }
+        super(CzarnowiejskaIntersection, self).__init__(width=width, height=height, lanes=lanes)
 
 
 class Application:
@@ -20,17 +64,18 @@ class Application:
         self.canvas = Canvas(self.gui, width=CANVAS_SIZE, height=CANVAS_SIZE)
         self.canvas.pack()
 
-        self.intersection = Intersection(width=10, height=10)
+        self.intersection = CzarnowiejskaIntersection()
         self.cars = []
         self.car_spawns = []
 
         self.init_intersection()
 
         lane_width = self.intersection.width / 3
-        speed_range = range(5, 7, 1)
+        # speed_range = range(5, 7, 1)
+        speed_range = [6]
         for i in range(2):
             self.car_spawns.append((
-                [(INTERSECTION_OFFSET_M + lane_width * (2 - i) + lane_width//2,
+                [(INTERSECTION_OFFSET_M + lane_width * (2 - i) + lane_width // 2,
                   CANVAS_SIZE_M)],
                 speed_range, [270], 1 + i, ['E' if i == 0 else 'N']))
         for i in range(2):
@@ -39,12 +84,12 @@ class Application:
                   0)],
                 speed_range, [90], 4 + i, ['S' if i == 0 else 'E']))
 
-        for i in range(3):
+        for i in range(2):
             self.car_spawns.append((
                 [(CANVAS_SIZE_M,
                   INTERSECTION_OFFSET_M + lane_width * i + lane_width // 2)],
                 speed_range, [180], 7 + i,
-                ['N'] if i == 0 else ['N', 'S'] if i == 1 else ['S']))
+                ['N' if i == 0 else 'S']))
 
     def run(self):
         self.gui.after(30, lambda: self._tick(30))
