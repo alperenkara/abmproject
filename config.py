@@ -1,0 +1,1 @@
+PIXES_PER_M = 10
