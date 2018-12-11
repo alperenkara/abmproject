@@ -27,6 +27,9 @@ class Lane:
             (1 - t) * ((1 - t) * p[0][1] + t * p[1][1]) + t * ((1 - t) * p[1][1] + t * p[2][1]),
         )
 
+    def get_exits(self, direction):
+        return [exit_points[1] for exit_points in self.exits[direction]]
+
 
 class Intersection:
     LaneIdType = int
@@ -44,7 +47,9 @@ class Intersection:
 
     def get_reservation(self, vehicle: VehicleType, lane_id: LaneIdType,
                         requested_direction: DirectionType,
-                        speed: float, distance: float) -> bool:
+                        speed: float, distance: float):
+        return self.lanes[lane_id].get_curves(requested_direction)[0], 12/speed, \
+               self.lanes[lane_id].get_exits(requested_direction)[0]  # TODO: temporary return always curve
         required_tiles = self._get_lane_tiles(lane_id, requested_direction, speed, vehicle)
         start_at = self.current_time + int(distance / speed / TIME_STEP)
         is_clear = not self._will_collide(required_tiles, start_at)
