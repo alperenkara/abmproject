@@ -6,8 +6,8 @@ from intersection import Intersection, Lane
 from vehicle import Vehicle
 
 # TODO: Vehicles do not collides with each other
-# TODO(15.12): Vehicles ask for clearance at intersection
-# TODO(15.12): Vehicles slows down if don't have clearance
+# TODO: there is an issue with reservations
+#  (debug idea: paint grid on intersection depending on time when it it's reserved)
 # TODO(15.12)?: Vehicles change angle lanes at intersection
 # TODO(15.12)?: Use better curves for lanes, exact entry and exit points
 
@@ -28,27 +28,27 @@ class CzarnowiejskaIntersection(Intersection):
         lanes = {
             1: Lane((mid_pos(lane_width, 3), height), {
                 'E': [((mid_pos(lane_width, 3), mid_pos(lane_width, 3)),
-                      (width, mid_pos(lane_width, 3)))]
+                       (width, mid_pos(lane_width, 3)))]
             }),
             2: Lane((mid_pos(lane_width, 2), height), {
                 'N': [((mid_pos(lane_width, 2), height / 2),
-                      (mid_pos(lane_width, 3), 0))]
+                       (mid_pos(lane_width, 3), 0))]
             }),
             4: Lane((mid_pos(lane_width, 1), 0), {
                 'S': [((mid_pos(lane_width, 1), height / 2),
-                      (mid_pos(lane_width, 1), height))]
+                       (mid_pos(lane_width, 1), height))]
             }),
             5: Lane((mid_pos(lane_width, 2), 0), {
-                'E': [((mid_pos(lane_width, 2), mid_pos(lane_width, 2)),
-                      (width, mid_pos(lane_width, 2)))]
+                'E': [((mid_pos(lane_width, 2), mid_pos(lane_width, 3)),
+                       (width, mid_pos(lane_width, 3)))]
             }),
             7: Lane((width, mid_pos(lane_width, 1)), {
                 'N': [((mid_pos(lane_width, 3), mid_pos(lane_width, 1)),
-                      (mid_pos(lane_width, 3), 0))]
+                       (mid_pos(lane_width, 3), 0))]
             }),
             8: Lane((width, mid_pos(lane_width, 2)), {
                 'S': [((mid_pos(lane_width, 1), mid_pos(lane_width, 2)),
-                      (mid_pos(lane_width, 1), height))]
+                       (mid_pos(lane_width, 1), height))]
             }),
         }
         super(CzarnowiejskaIntersection, self).__init__(width=width, height=height, lanes=lanes)
@@ -95,22 +95,11 @@ class Application:
             ))
 
     def run(self):
-        spawn = random.choice(self.car_spawns)
-        self.cars.append(Vehicle(
-            spawn[0],
-            random.choice(spawn[1]),
-            spawn[2],
-            spawn[3],
-            spawn[4],
-            spawn[5],
-            self.intersection,
-            self.canvas
-        ))
         self.gui.after(30, lambda: self._tick(30))
         self.gui.mainloop()
 
     def _tick(self, time_passed):
-        if random.randint(0, 100) < 3:
+        if random.randint(0, 100) < 5:
             spawn = random.choice(self.car_spawns)
             self.cars.append(Vehicle(
                 spawn[0],
@@ -123,6 +112,7 @@ class Application:
                 self.canvas
             ))
 
+        self.intersection.tick(time_passed / 1000)
         for car in self.cars:
             car.tick(time_passed / 1000)
         self.gui.after(time_passed, lambda: self._tick(time_passed))

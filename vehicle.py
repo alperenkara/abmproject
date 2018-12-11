@@ -20,13 +20,14 @@ class Vehicle:
         self.intended_direction = intended_direction
         self.inter_entry = inter_entry
         self.inter = inter
-        self.width = 2
+        self.width = 1
         self.height = 1
         self.at_inter_since = None
         self.intersection_path = None
         self.image = None
         self.canvas = canvas
         if canvas is not None:
+            # self.image = canvas.create_rectangle(x1, y1, x2, y2, fill="blue")
             self.image = canvas.create_polygon([(0, 0), (1, 0), (0, 1)], fill="blue")
 
     def tick(self, time):
@@ -34,6 +35,8 @@ class Vehicle:
             self.intersection_path = self.inter.get_reservation(
                 self, self.lane_id, self.intended_direction,
                 self.speed, dist(self.pos, self.inter_entry))
+            if self.intersection_path is None:
+                self.speed *= 0.9
 
         if self.at_inter_since is not None:
             self.at_inter_since += time
@@ -56,6 +59,7 @@ class Vehicle:
 
             if dist(self.pos, self.inter_entry) < 0.1:
                 self.at_inter_since = 0
+                print("Should be at {} arived at {}".format(self.intersection_path[3], self.inter.current_time))
 
         if self.canvas is not None:
             pos_px = (self.pos[0] * PIXES_PER_M, self.pos[1] * PIXES_PER_M)
@@ -74,8 +78,10 @@ class Vehicle:
             offset = complex(center[0], center[1])
             new_xy = []
             for x, y in xy:
-                v = cangle * (complex(x, y) - offset) + offset
-                new_xy.append(v.real)
-                new_xy.append(v.imag)
+                # v = cangle * (complex(x, y) - offset) + offset
+                # new_xy.append(v.real)
+                # new_xy.append(v.imag)
+                new_xy.append(x)
+                new_xy.append(y)
 
             self.canvas.coords(self.image, *new_xy)

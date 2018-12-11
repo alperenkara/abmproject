@@ -39,33 +39,48 @@ class Intersection:
     Tile = List[Tuple[Time, VehicleType]]
 
     def __init__(self, width: int, height: int, lanes: Dict[int, Lane]):
-        self.grid = [[[] for _ in range(0, height)] for _ in range(0, width)]
+        self.grid = [[[] for _ in range(0, height * TILES_PER_M)] for _ in range(0, width * TILES_PER_M)]
         self.width = width
         self.height = height
         self.current_time = 0
+        self.unused_time = 0
         self.lanes = lanes
+
+    def tick(self, time: float):
+        self.unused_time += time
+        while self.unused_time > TIME_STEP:
+            self.current_time += 1
+            self.unused_time -= TIME_STEP
 
     def get_reservation(self, vehicle: VehicleType, lane_id: LaneIdType,
                         requested_direction: DirectionType,
                         speed: float, distance: float):
-        return self.lanes[lane_id].get_curves(requested_direction)[0], 12/speed, \
-               self.lanes[lane_id].get_exits(requested_direction)[0]  # TODO: temporary return always curve
         required_tiles = self._get_lane_tiles(lane_id, requested_direction, speed, vehicle)
         start_at = self.current_time + int(distance / speed / TIME_STEP)
         is_clear = not self._will_collide(required_tiles, start_at)
         if is_clear:
             self._mark_reserved(required_tiles, vehicle, start_at)
-        return is_clear
+            return self.lanes[lane_id].get_curves(requested_direction)[0], 12 / speed, \
+                   self.lanes[lane_id].get_exits(requested_direction)[0], start_at
+        print('not clear')
+        return None
 
     def _get_vehicle_tiles(self, pos: PosType, vehicle: VehicleType) -> List[TilePos]:  # TODO: buffers
+        # vehicle_corners = (
+        #     (pos[0] - vehicle.width / 2, pos[1] - vehicle.height / 2),
+        #     (pos[0] + vehicle.width / 2, pos[1] + vehicle.height / 2),
+        # )
+
         vehicle_corners = (
-            (pos[0] - vehicle.width / 2, pos[1] - vehicle.height / 2),
-            (pos[0] + vehicle.width / 2, pos[1] + vehicle.height / 2),
+            (pos[0]*TILES_PER_M - vehicle.width*TILES_PER_M / 2, pos[1]*TILES_PER_M - vehicle.height*TILES_PER_M / 2),
+            (pos[0]*TILES_PER_M + vehicle.width*TILES_PER_M / 2, pos[1]*TILES_PER_M + vehicle.height*TILES_PER_M / 2),
         )
 
         return [(x, y)
                 for x in range(int(floor(vehicle_corners[0][0])), int(ceil(vehicle_corners[1][0])) + 1)
-                for y in range(int(floor(vehicle_corners[0][1])), int(ceil(vehicle_corners[1][1])) + 1)]
+                if 0 <= x < self.width * TILES_PER_M
+                for y in range(int(floor(vehicle_corners[0][1])), int(ceil(vehicle_corners[1][1])) + 1)
+                if 0 <= y < self.height * TILES_PER_M]
 
     # TODO: multiple outgoing lines
     def _get_lane_tiles(self, lane_id: LaneIdType, requested_direction: DirectionType,
@@ -78,7 +93,7 @@ class Intersection:
         if requested_direction not in lane.exits:
             return []
 
-        t_range = [i * 0.01 for i in range(101)]
+        t_range = [i * 0.05 for i in range(101)]
         time_to_pass_intersection = 5 / speed  # TODO(15.12): use curve length instead of 5
 
         return [(tile, int((t * time_to_pass_intersection) / TIME_STEP))
