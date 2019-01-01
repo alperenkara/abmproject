@@ -6,8 +6,6 @@ from intersection import Intersection, Lane
 from vehicle import Vehicle
 
 # TODO: Vehicles do not collides with each other
-# TODO: there is an issue with reservations
-#  (debug idea: paint grid on intersection depending on time when it it's reserved)
 # TODO(15.12)?: Vehicles change angle lanes at intersection
 # TODO(15.12)?: Use better curves for lanes, exact entry and exit points
 
@@ -21,7 +19,7 @@ def mid_pos(lane_width: float, i: int):
 
 class CzarnowiejskaIntersection(Intersection):
 
-    def __init__(self):
+    def __init__(self, canvas):
         width = 10
         height = 10
         lane_width = height / 3
@@ -51,7 +49,7 @@ class CzarnowiejskaIntersection(Intersection):
                        (mid_pos(lane_width, 1), height))]
             }),
         }
-        super(CzarnowiejskaIntersection, self).__init__(width=width, height=height, lanes=lanes)
+        super(CzarnowiejskaIntersection, self).__init__(width=width, height=height, lanes=lanes, canvas=canvas)
 
 
 class Application:
@@ -62,7 +60,7 @@ class Application:
         self.canvas = Canvas(self.gui, width=CANVAS_SIZE, height=CANVAS_SIZE)
         self.canvas.pack()
 
-        self.intersection = CzarnowiejskaIntersection()
+        self.intersection = CzarnowiejskaIntersection(self.canvas)
         self.cars = []
         self.car_spawns = []
 
@@ -127,7 +125,7 @@ class Application:
         inter_end_y = INTERSECTION_OFFSET + inter.height * PIXES_PER_M
 
         # intersection area
-        c.create_rectangle(inter_start_x, inter_start_y, inter_end_x, inter_end_y, fill="black")
+        # c.create_rectangle(inter_start_x, inter_start_y, inter_end_x, inter_end_y, fill="black")
 
         # lanes NORTH
         self.create_vertical_lanes(inter_end_x, inter_start_x, 0, inter_start_y)

@@ -37,13 +37,18 @@ class Vehicle:
                 self.speed, dist(self.pos, self.inter_entry))
             if self.intersection_path is None:
                 self.speed *= 0.9
+        else:
+            self.canvas.itemconfigure(self.image, fill='green')
 
         if self.at_inter_since is not None:
             self.at_inter_since += time
-            x, y = self.intersection_path[0](self.at_inter_since/self.intersection_path[1])
+            x, y = self.intersection_path[0](self.at_inter_since / self.intersection_path[1])
             self.pos = (INTERSECTION_OFFSET_M + x, INTERSECTION_OFFSET_M + y)
             if self.at_inter_since >= self.intersection_path[1]:
+                print("{} eq {} eq {}".format(self.intersection_path[3] + self.at_inter_since * 10, self.inter.current_time,
+                                              self.intersection_path[3] + self.intersection_path[1] * 10))
                 self.at_inter_since = None
+                self.speed = 6
                 if self.intended_direction == 'S':
                     self.angle = 90
                 elif self.intended_direction == 'E':
