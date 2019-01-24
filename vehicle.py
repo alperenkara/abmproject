@@ -45,8 +45,8 @@ class Vehicle:
             x, y = self.intersection_path[0](self.at_inter_since / self.intersection_path[1])
             self.pos = (INTERSECTION_OFFSET_M + x, INTERSECTION_OFFSET_M + y)
             if self.at_inter_since >= self.intersection_path[1]:
-                print("{} eq {} eq {}".format(self.intersection_path[3] + self.at_inter_since * 10, self.inter.current_time,
-                                              self.intersection_path[3] + self.intersection_path[1] * 10))
+                #print("{} eq {} eq {}".format(self.intersection_path[3] + self.at_inter_since * 10, self.inter.current_time,
+                #                              self.intersection_path[3] + self.intersection_path[1] * 10))
                 self.at_inter_since = None
                 self.speed = 6
                 if self.intended_direction == 'S':
@@ -64,7 +64,7 @@ class Vehicle:
 
             if dist(self.pos, self.inter_entry) < 0.1:
                 self.at_inter_since = 0
-                print("Should be at {} arived at {}".format(self.intersection_path[3], self.inter.current_time))
+                #print("Should be at {} arived at {}".format(self.intersection_path[3], self.inter.current_time))
 
         if self.canvas is not None:
             pos_px = (self.pos[0] * PIXES_PER_M, self.pos[1] * PIXES_PER_M)

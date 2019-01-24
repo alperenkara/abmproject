@@ -13,6 +13,7 @@ CANVAS_SIZE = 700
 CANVAS_SIZE_M = CANVAS_SIZE // PIXES_PER_M
 
 
+
 def mid_pos(lane_width: float, i: int):
     return lane_width * (i - 1) + lane_width / 2
 
@@ -54,6 +55,8 @@ class CzarnowiejskaIntersection(Intersection):
 
 class Application:
     def __init__(self):
+        self.next_spawn = 0
+        self.total = 0
         self.gui = Tk()
         self.gui.title("Autonomous intersection simulation")
         self.gui.geometry("{}x{}".format(CANVAS_SIZE, CANVAS_SIZE))
@@ -98,7 +101,10 @@ class Application:
 
     def _tick(self, time_passed):
         if random.randint(0, 100) < 5:
-            spawn = random.choice(self.car_spawns)
+            self.total = self.total + 1
+            print(self.total)
+            spawn = self.car_spawns[self.next_spawn]
+            self.next_spawn = (self.next_spawn + 1) % len(self.car_spawns)
             self.cars.append(Vehicle(
                 spawn[0],
                 random.choice(spawn[1]),

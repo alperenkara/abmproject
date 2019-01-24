@@ -71,7 +71,7 @@ class Intersection:
             self._mark_reserved(required_tiles, vehicle, start_at)
             return self.lanes[lane_id].get_curves(requested_direction)[0], 12 / 6, \
                    self.lanes[lane_id].get_exits(requested_direction)[0], start_at
-        print('not clear')
+        #print('not clear')
         return None
 
     def _get_vehicle_tiles(self, pos: PosType, vehicle: VehicleType) -> List[TilePos]:  # TODO: buffers
